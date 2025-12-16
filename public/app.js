@@ -77,6 +77,51 @@ const confirmCancel = document.getElementById("confirmCancel");
 let selectedSearchBook = null;
 let selectedConfirmPhoto = null;
 
+// Toast notification function
+function showToast(message, duration = 2000) {
+  const toast = document.createElement("div");
+  toast.textContent = message;
+  toast.style.cssText = `
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        box-shadow: 0 8px 24px rgba(107, 142, 111, 0.5);
+        z-index: 10000;
+        animation: slideUp 0.3s ease;
+    `;
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.animation = "slideDown 0.3s ease";
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+// Add animations to head
+if (!document.querySelector("#toast-animations")) {
+  const style = document.createElement("style");
+  style.id = "toast-animations";
+  style.textContent = `
+        @keyframes slideUp {
+            from { transform: translateX(-50%) translateY(100%); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(0); opacity: 1; }
+            to { transform: translateX(-50%) translateY(100%); opacity: 0; }
+        }
+    `;
+  document.head.appendChild(style);
+}
+
 // Initialize
 document.addEventListener("DOMContentLoaded", () => {
   checkAuthentication();
@@ -293,7 +338,15 @@ function renderBooks() {
   booksContainer.innerHTML = books
     .map((book) => {
       const coverCount = book.covers.length;
-      const coverImage = book.covers[0]?.url || book.apiCoverUrl || "";
+
+      // Prioritize user covers, fall back to API cover
+      let coverImage = "";
+      if ((book.covers.length > 0) & !book.apiCoverUrl) {
+        coverImage = book.covers[0].url;
+      } else if (book.apiCoverUrl) {
+        coverImage = book.apiCoverUrl;
+      }
+
       const hasCover = coverCount > 0;
 
       return `
@@ -304,38 +357,40 @@ function renderBooks() {
                     <img src="${coverImage}" alt="${book.title}" class="cover-preview">
                 `
                     : `
-                    <div class="cover-preview" style="display: flex; align-items: center; justify-content: center; font-size: 4rem;">
+                    <div class="cover-preview" style="display: flex; align-items: center; justify-content: center; font-size: 3rem; color: var(--text-light);">
                         📚
                     </div>
                 `
                 }
                 
-                <div class="book-title">${book.title}</div>
-                ${
-                  book.author
-                    ? `<div class="book-author">by ${book.author}</div>`
-                    : ""
-                }
-                
-                <span class="cover-count ${!hasCover ? "no-covers" : ""}">
+                <div class="book-info">
+                    <div class="book-title">${book.title}</div>
                     ${
-                      hasCover
-                        ? `${coverCount} cover${coverCount > 1 ? "s" : ""}`
-                        : "No covers yet"
+                      book.author
+                        ? `<div class="book-author">by ${book.author}</div>`
+                        : ""
                     }
-                </span>
-                
-                <div class="quick-actions" onclick="event.stopPropagation()">
-                    <button class="btn-icon btn-add-cover-quick" onclick="quickAddCover('${
-                      book.id
-                    }')" title="Add cover">
-                        Add Photo
-                    </button>
-                    <button class="btn-icon btn-view" onclick="openSwipeModal('${
-                      book.id
-                    }')" title="View">
-                        View
-                    </button>
+                    
+                    <span class="cover-count ${!hasCover ? "no-covers" : ""}">
+                        ${
+                          hasCover
+                            ? `${coverCount} cover${coverCount > 1 ? "s" : ""}`
+                            : "No covers yet"
+                        }
+                    </span>
+                    
+                    <div class="quick-actions" onclick="event.stopPropagation()">
+                        <button class="btn-icon btn-add-cover-quick" onclick="quickAddCover('${
+                          book.id
+                        }')" title="Add cover">
+                            Add Photo
+                        </button>
+                        <button class="btn-icon btn-view" onclick="openSwipeModal('${
+                          book.id
+                        }')" title="View">
+                            View
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -528,7 +583,7 @@ async function handleConfirmAddBook() {
     searchInput.value = "";
     await loadBooks();
     switchTab("library");
-    alert("Book added! 📚");
+    showToast("📚 Book added to library");
   } catch (error) {
     console.error("Error adding book:", error);
     alert("Failed to add book");
@@ -599,7 +654,7 @@ async function handleAddBook(e) {
       clearPhoto();
       await loadBooks();
       switchTab("library");
-      alert("Book added! 📚");
+      showToast("📚 Book added to library");
     } else {
       const error = await response.json();
       alert(error.error || "Failed to add book");
@@ -658,7 +713,7 @@ async function handleAddCoverToBook(e) {
         }
       }
 
-      alert("Cover added! 📸");
+      showToast("📸 Cover added");
     }
   } catch (error) {
     console.error("Error adding cover:", error);
@@ -846,7 +901,7 @@ async function deleteCurrentCover() {
         closeSwipeModal();
       }
 
-      alert("Cover deleted");
+      showToast("🗑️ Cover deleted");
     }
   } catch (error) {
     console.error("Error deleting cover:", error);
@@ -878,7 +933,7 @@ async function deleteCurrentBook() {
     if (response.ok) {
       closeSwipeModal();
       await loadBooks();
-      alert("Book deleted");
+      showToast("🗑️ Book deleted");
     }
   } catch (error) {
     console.error("Error deleting book:", error);

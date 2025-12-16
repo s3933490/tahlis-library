@@ -347,18 +347,20 @@
       /* Book Cards */
       .books-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         gap: 1rem;
       }
 
       .book-card {
         background: var(--surface);
         border-radius: 16px;
-        padding: 1.25rem;
+        padding: 1rem;
         box-shadow: 0 4px 16px var(--shadow);
         transition: all 0.3s;
         cursor: pointer;
         border: 2px solid transparent;
+        display: flex;
+        flex-direction: column;
       }
 
       .book-card:hover {
@@ -371,44 +373,60 @@
         transform: scale(0.98);
       }
 
+      .cover-preview {
+        width: 100%;
+        aspect-ratio: 2/3;
+        object-fit: contain;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--background) 0%, #e8e0d5 100%);
+        margin-bottom: 0.75rem;
+        border: 2px solid var(--border);
+        padding: 0.5rem;
+      }
+
+      .book-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
       .book-title {
-        font-size: 1.1rem;
+        font-size: 0.95rem;
         font-weight: 700;
         color: var(--text);
         margin-bottom: 0.25rem;
         line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
       }
 
       .book-author {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         color: var(--text-light);
-        margin-bottom: 0.75rem;
-      }
-
-      .cover-preview {
-        width: 100%;
-        height: 200px;
-        object-fit: cover;
-        border-radius: 12px;
-        background: var(--background);
-        margin-bottom: 0.75rem;
-        border: 2px solid var(--border);
+        margin-bottom: 0.5rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
       }
 
       .cover-count {
         display: inline-block;
-        padding: 0.35rem 0.75rem;
+        padding: 0.25rem 0.6rem;
         background: linear-gradient(
           135deg,
           var(--success) 0%,
           var(--primary-dark) 100%
         );
         color: white;
-        border-radius: 20px;
-        font-size: 0.75rem;
+        border-radius: 12px;
+        font-size: 0.7rem;
         font-weight: 700;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.5rem;
         box-shadow: 0 2px 8px var(--shadow);
+        align-self: flex-start;
       }
 
       .cover-count.no-covers {
@@ -420,21 +438,22 @@
       }
 
       .quick-actions {
-        display: flex;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         gap: 0.5rem;
+        margin-top: auto;
       }
 
       .btn-icon {
-        flex: 1;
-        padding: 0.75rem;
+        padding: 0.6rem 0.5rem;
         border: none;
-        border-radius: 10px;
-        font-size: 0.85rem;
-        font-weight: 600;
+        border-radius: 8px;
+        font-size: 0.7rem;
+        font-weight: 700;
         cursor: pointer;
         transition: all 0.3s;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.3px;
       }
 
       .btn-add-cover-quick {
@@ -465,6 +484,35 @@
       .btn-view:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px var(--shadow);
+      }
+
+      /* Tablet & Desktop: Larger cards */
+      @media (min-width: 641px) {
+        .books-grid {
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        }
+
+        .book-card {
+          padding: 1.25rem;
+        }
+
+        .book-title {
+          font-size: 1.05rem;
+        }
+
+        .book-author {
+          font-size: 0.85rem;
+        }
+
+        .cover-count {
+          font-size: 0.75rem;
+          padding: 0.3rem 0.7rem;
+        }
+
+        .btn-icon {
+          font-size: 0.8rem;
+          padding: 0.7rem 0.5rem;
+        }
       }
 
       /* Modal Base */
@@ -1008,10 +1056,6 @@
       }
 
       @media (max-width: 640px) {
-        .books-grid {
-          grid-template-columns: 1fr;
-        }
-
         .stats {
           grid-template-columns: repeat(3, 1fr);
         }
