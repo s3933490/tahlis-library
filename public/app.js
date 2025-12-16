@@ -329,12 +329,12 @@ function renderBooks() {
                     <button class="btn-icon btn-add-cover-quick" onclick="quickAddCover('${
                       book.id
                     }')" title="Add cover">
-                        📸
+                        Add Photo
                     </button>
                     <button class="btn-icon btn-view" onclick="openSwipeModal('${
                       book.id
                     }')" title="View">
-                        👁️
+                        View
                     </button>
                 </div>
             </div>
@@ -434,6 +434,7 @@ window.selectSearchResult = function (book) {
   // Hide search results and show confirmation
   searchResults.classList.remove("show");
   confirmModal.classList.add("show");
+  document.body.classList.add("modal-open");
 };
 
 // Handle Confirmation Photo Select
@@ -465,6 +466,7 @@ function clearConfirmPhoto() {
 
 function closeConfirmModal() {
   confirmModal.classList.remove("show");
+  document.body.classList.remove("modal-open");
   selectedSearchBook = null;
   selectedConfirmPhoto = null;
 }
@@ -719,11 +721,13 @@ window.openSwipeModal = function (bookId) {
   modalDeleteCover.style.display = covers[0].id === "api" ? "none" : "block";
 
   coverModal.classList.add("show");
+  document.body.classList.add("modal-open");
   updateSwiper();
 };
 
 function closeSwipeModal() {
   coverModal.classList.remove("show");
+  document.body.classList.remove("modal-open");
   currentBookForModal = null;
   currentCoverIndex = 0;
 }
