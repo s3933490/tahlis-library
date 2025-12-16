@@ -57,7 +57,25 @@ const swiperPagination = document.getElementById("swiperPagination");
 const closeModal = document.getElementById("closeModal");
 const modalAddCover = document.getElementById("modalAddCover");
 const modalDeleteCover = document.getElementById("modalDeleteCover");
+const modalDeleteBook = document.getElementById("modalDeleteBook");
 const addCoverInput = document.getElementById("addCoverInput");
+
+// Confirmation Modal
+const confirmModal = document.getElementById("confirmModal");
+const confirmTitle = document.getElementById("confirmTitle");
+const confirmAuthor = document.getElementById("confirmAuthor");
+const confirmCoverPreview = document.getElementById("confirmCoverPreview");
+const confirmCoverImage = document.getElementById("confirmCoverImage");
+const confirmPhotoUpload = document.getElementById("confirmPhotoUpload");
+const confirmPhotoInput = document.getElementById("confirmPhotoInput");
+const confirmPhotoPreview = document.getElementById("confirmPhotoPreview");
+const confirmPhotoImage = document.getElementById("confirmPhotoImage");
+const confirmRemovePhoto = document.getElementById("confirmRemovePhoto");
+const confirmAddBook = document.getElementById("confirmAddBook");
+const confirmCancel = document.getElementById("confirmCancel");
+
+let selectedSearchBook = null;
+let selectedConfirmPhoto = null;
 
 // Initialize
 document.addEventListener("DOMContentLoaded", () => {
@@ -149,7 +167,21 @@ function setupEventListeners() {
   });
   modalAddCover.addEventListener("click", () => addCoverInput.click());
   modalDeleteCover.addEventListener("click", deleteCurrentCover);
+  modalDeleteBook.addEventListener("click", deleteCurrentBook);
   addCoverInput.addEventListener("change", handleAddCoverToBook);
+
+  // Confirmation Modal
+  confirmPhotoUpload.addEventListener("click", () => confirmPhotoInput.click());
+  confirmPhotoInput.addEventListener("change", handleConfirmPhotoSelect);
+  confirmRemovePhoto.addEventListener("click", (e) => {
+    e.stopPropagation();
+    clearConfirmPhoto();
+  });
+  confirmAddBook.addEventListener("click", handleConfirmAddBook);
+  confirmCancel.addEventListener("click", closeConfirmModal);
+  confirmModal.addEventListener("click", (e) => {
+    if (e.target === confirmModal) closeConfirmModal();
+  });
 
   // Swipe handling
   swiperContainer.addEventListener("touchstart", handleTouchStart, {
@@ -379,9 +411,73 @@ function handleAPISearch(e) {
   }, 300);
 }
 
-// Select Search Result
-window.selectSearchResult = async function (book) {
+// Select Search Result - Show Confirmation Modal
+window.selectSearchResult = function (book) {
+  selectedSearchBook = book;
+  selectedConfirmPhoto = null;
+
+  // Populate modal
+  confirmTitle.textContent = book.title;
+  confirmAuthor.textContent = book.author || "Unknown Author";
+
+  // Show API cover if available
+  if (book.coverUrl) {
+    confirmCoverImage.src = book.coverUrl;
+    confirmCoverPreview.style.display = "block";
+  } else {
+    confirmCoverPreview.style.display = "none";
+  }
+
+  // Reset photo upload
+  clearConfirmPhoto();
+
+  // Hide search results and show confirmation
+  searchResults.classList.remove("show");
+  confirmModal.classList.add("show");
+};
+
+// Handle Confirmation Photo Select
+function handleConfirmPhotoSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  selectedConfirmPhoto = file;
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    confirmPhotoImage.src = e.target.result;
+    confirmPhotoPreview.style.display = "block";
+    confirmPhotoUpload.querySelector(".upload-prompt").style.display = "none";
+  };
+
+  reader.readAsDataURL(file);
+}
+
+function clearConfirmPhoto() {
+  selectedConfirmPhoto = null;
+  confirmPhotoInput.value = "";
+  confirmPhotoImage.src = "";
+  confirmPhotoPreview.style.display = "none";
+  if (confirmPhotoUpload.querySelector(".upload-prompt")) {
+    confirmPhotoUpload.querySelector(".upload-prompt").style.display = "flex";
+  }
+}
+
+function closeConfirmModal() {
+  confirmModal.classList.remove("show");
+  selectedSearchBook = null;
+  selectedConfirmPhoto = null;
+}
+
+// Handle Confirm Add Book
+async function handleConfirmAddBook() {
+  if (!selectedSearchBook) return;
+
+  confirmAddBook.disabled = true;
+  confirmAddBook.textContent = "Adding...";
+
   try {
+    // First, add the book
     const response = await fetch(`${API_BASE}/api/books/from-search`, {
       method: "POST",
       headers: {
@@ -389,9 +485,9 @@ window.selectSearchResult = async function (book) {
         "x-app-password": appPassword,
       },
       body: JSON.stringify({
-        title: book.title,
-        author: book.author,
-        apiCoverUrl: book.coverUrl,
+        title: selectedSearchBook.title,
+        author: selectedSearchBook.author,
+        apiCoverUrl: selectedSearchBook.coverUrl,
       }),
     });
 
@@ -400,30 +496,45 @@ window.selectSearchResult = async function (book) {
       return;
     }
 
-    if (response.ok) {
-      const newBook = await response.json();
-      searchInput.value = "";
-      searchResults.innerHTML = "";
-      searchResults.classList.remove("show");
-
-      await loadBooks();
-
-      // Immediately prompt to add cover
-      setTimeout(() => {
-        if (
-          confirm(
-            `"${book.title}" added! Would you like to add a photo of your cover now?`
-          )
-        ) {
-          quickAddCover(newBook.id);
-        }
-      }, 300);
+    if (!response.ok) {
+      throw new Error("Failed to add book");
     }
+
+    const newBook = await response.json();
+
+    // If user uploaded a photo, add it as a cover
+    if (selectedConfirmPhoto) {
+      const formData = new FormData();
+      formData.append("photo", selectedConfirmPhoto);
+
+      const coverResponse = await fetch(
+        `${API_BASE}/api/books/${newBook.id}/covers`,
+        {
+          method: "POST",
+          headers: { "x-app-password": appPassword },
+          body: formData,
+        }
+      );
+
+      if (!coverResponse.ok) {
+        console.error("Failed to add cover, but book was added");
+      }
+    }
+
+    // Close modal and refresh
+    closeConfirmModal();
+    searchInput.value = "";
+    await loadBooks();
+    switchTab("library");
+    alert("Book added! 📚");
   } catch (error) {
     console.error("Error adding book:", error);
     alert("Failed to add book");
+  } finally {
+    confirmAddBook.disabled = false;
+    confirmAddBook.textContent = "Add to Library";
   }
-};
+}
 
 // Photo Upload (Manual)
 function handlePhotoSelect(e) {
@@ -736,6 +847,38 @@ async function deleteCurrentCover() {
   } catch (error) {
     console.error("Error deleting cover:", error);
     alert("Failed to delete cover");
+  }
+}
+
+// Delete Current Book (from modal)
+async function deleteCurrentBook() {
+  if (!currentBookForModal) return;
+
+  if (!confirm(`Delete "${currentBookForModal.title}" and all its covers?`))
+    return;
+
+  try {
+    const response = await fetch(
+      `${API_BASE}/api/books/${currentBookForModal.id}`,
+      {
+        method: "DELETE",
+        headers: { "x-app-password": appPassword },
+      }
+    );
+
+    if (response.status === 401) {
+      logout();
+      return;
+    }
+
+    if (response.ok) {
+      closeSwipeModal();
+      await loadBooks();
+      alert("Book deleted");
+    }
+  } catch (error) {
+    console.error("Error deleting book:", error);
+    alert("Failed to delete book");
   }
 }
 
