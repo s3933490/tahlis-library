@@ -815,11 +815,14 @@ window.openSwipeModal = function (bookId) {
     return;
   }
 
+  // Escape title for HTML safety
+  const safeTitle = escapeHtml(book.title);
+
   swiperWrapper.innerHTML = covers
     .map(
       (cover, index) => `
         <div class="swiper-slide">
-            <img src="${cover.url}" alt="${book.title}">
+            <img src="${cover.url}" alt="${safeTitle}">
             <div class="cover-info">
                 <div class="cover-counter">${index + 1} / ${covers.length}</div>
             </div>
@@ -827,7 +830,6 @@ window.openSwipeModal = function (bookId) {
     `
     )
     .join("");
-
   // Build pagination
   swiperPagination.innerHTML = covers
     .map(
