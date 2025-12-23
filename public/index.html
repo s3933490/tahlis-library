@@ -1270,8 +1270,12 @@
                   </button>
                 </div>
               </div>
-              <input type="file" id="photoInput" accept="image/*" required />
-
+              <input
+                type="file"
+                id="photoInput"
+                accept="image/*,.heic,.heif"
+                required
+              />
               <div class="form-group">
                 <label for="bookTitle">Book Title *</label>
                 <input type="text" id="bookTitle" required />
@@ -1388,7 +1392,7 @@
             <input
               type="file"
               id="confirmPhotoInput"
-              accept="image/*"
+              accept="image/*,.heic,.heif"
               style="display: none"
             />
           </div>
