@@ -1167,6 +1167,44 @@
             />
           </div>
 
+          <!-- Books per page selector -->
+          <div
+            style="
+              display: flex;
+              justify-content: flex-end;
+              align-items: center;
+              gap: 0.5rem;
+              margin-bottom: 0.5rem;
+            "
+          >
+            <label
+              style="
+                font-size: 0.85rem;
+                color: var(--text-light);
+                font-weight: 600;
+              "
+              >Show:</label
+            >
+            <select
+              id="booksPerPageSelect"
+              style="
+                padding: 0.5rem 0.75rem;
+                border: 2px solid var(--border);
+                border-radius: 8px;
+                background: var(--surface);
+                color: var(--text);
+                font-weight: 600;
+                cursor: pointer;
+              "
+            >
+              <option value="20" selected>20</option>
+              <option value="40">40</option>
+              <option value="60">60</option>
+              <option value="100">100</option>
+              <option value="all">All</option>
+            </select>
+          </div>
+
           <!-- Stats -->
           <div class="stats">
             <div class="stat-card">
