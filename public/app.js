@@ -383,10 +383,10 @@ function renderBooks() {
 
       // Prioritize user covers, fall back to API cover
       let coverImage = "";
-      if (book.covers.length > 0) {
-        coverImage = book.covers[0].url;
-      } else if (book.apiCoverUrl) {
-        coverImage = book.apiCoverUrl;
+      if (book.apiCoverUrl) {
+        coverImage = book.apiCoverUrl; // API cover first! ⭐
+      } else if (book.covers.length > 0) {
+        coverImage = book.covers[0].url; // User photos as fallback
       }
 
       const hasCover = coverCount > 0;
