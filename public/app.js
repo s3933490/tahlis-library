@@ -6,6 +6,9 @@ let books = [];
 let allBooks = []; // For search filtering
 let appPassword = "";
 let selectedPhoto = null;
+let displayedBooks = []; // For pagination
+let currentPage = 1;
+let booksPerPage = 20;
 let currentBookForModal = null;
 let currentCoverIndex = 0;
 let searchTimeout;
@@ -31,6 +34,11 @@ const addTab = document.getElementById("addTab");
 // Library Tab
 const librarySearchInput = document.getElementById("librarySearchInput");
 const booksContainer = document.getElementById("booksContainer");
+const booksPerPageSelect = document.getElementById("booksPerPageSelect");
+const pagination = document.getElementById("pagination");
+const prevPage = document.getElementById("prevPage");
+const nextPage = document.getElementById("nextPage");
+const pageInfo = document.getElementById("pageInfo");
 
 // Add Tab - Search
 const searchInput = document.getElementById("searchInput");
@@ -188,6 +196,32 @@ function setupEventListeners() {
   // Library search
   librarySearchInput.addEventListener("input", filterLibrary);
 
+  // Books per page selector
+  booksPerPageSelect.addEventListener("change", (e) => {
+    const value = e.target.value;
+    booksPerPage = value === "all" ? Infinity : parseInt(value);
+    currentPage = 1;
+    renderBooks();
+  });
+
+  // Pagination
+  prevPage.addEventListener("click", () => {
+    if (currentPage > 1) {
+      currentPage--;
+      renderBooks();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
+
+  nextPage.addEventListener("click", () => {
+    const totalPages = Math.ceil(books.length / booksPerPage);
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderBooks();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
+
   // Add tab - API search
   searchInput.addEventListener("input", handleAPISearch);
   document.addEventListener("click", (e) => {
@@ -332,16 +366,24 @@ function renderBooks() {
                 }</p>
             </div>
         `;
+    pagination.style.display = "none";
     return;
   }
 
-  booksContainer.innerHTML = books
+  // Calculate pagination
+  const totalPages = Math.ceil(books.length / booksPerPage);
+  const startIndex = (currentPage - 1) * booksPerPage;
+  const endIndex = startIndex + booksPerPage;
+  displayedBooks = books.slice(startIndex, endIndex);
+
+  // Render books
+  booksContainer.innerHTML = displayedBooks
     .map((book) => {
       const coverCount = book.covers.length;
 
       // Prioritize user covers, fall back to API cover
       let coverImage = "";
-      if ((book.covers.length > 0) & !book.apiCoverUrl) {
+      if (book.covers.length > 0) {
         coverImage = book.covers[0].url;
       } else if (book.apiCoverUrl) {
         coverImage = book.apiCoverUrl;
@@ -396,6 +438,16 @@ function renderBooks() {
         `;
     })
     .join("");
+
+  // Update pagination controls
+  if (totalPages > 1) {
+    pagination.style.display = "flex";
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+    prevPage.disabled = currentPage === 1;
+    nextPage.disabled = currentPage === totalPages;
+  } else {
+    pagination.style.display = "none";
+  }
 }
 
 // Update Stats
