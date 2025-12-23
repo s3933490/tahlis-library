@@ -331,10 +331,25 @@ async function loadBooks() {
       return;
     }
 
-    allBooks = await response.json();
+    const data = await response.json();
+
+    // Sort alphabetically by author (then title if no author)
+    allBooks = data.sort((a, b) => {
+      const authorA = (a.author || "Unknown").toLowerCase();
+      const authorB = (b.author || "Unknown").toLowerCase();
+
+      if (authorA === authorB) {
+        // Same author - sort by title
+        return a.title.toLowerCase().localeCompare(b.title.toLowerCase());
+      }
+
+      return authorA.localeCompare(authorB);
+    });
+
     books = [...allBooks];
-    renderBooks();
+    currentPage = 1;
     updateStats();
+    renderBooks();
   } catch (error) {
     console.error("Error loading books:", error);
   }
