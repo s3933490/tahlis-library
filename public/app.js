@@ -85,6 +85,13 @@ const confirmCancel = document.getElementById("confirmCancel");
 let selectedSearchBook = null;
 let selectedConfirmPhoto = null;
 
+function escapeHtml(text) {
+  if (!text) return "";
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // Toast notification function
 function showToast(message, duration = 2000) {
   const toast = document.createElement("div");
@@ -391,12 +398,15 @@ function renderBooks() {
 
       const hasCover = coverCount > 0;
 
+      const safeTitle = escapeHtml(book.title);
+      const safeAuthor = escapeHtml(book.author);
+
       return `
             <div class="book-card" onclick="openSwipeModal('${book.id}')">
                 ${
                   coverImage
                     ? `
-                    <img src="${coverImage}" alt="${book.title}" class="cover-preview">
+                    <img src="${coverImage}" alt="${safeTitle}" class="cover-preview">
                 `
                     : `
                     <div class="cover-preview" style="display: flex; align-items: center; justify-content: center; font-size: 3rem; color: var(--text-light);">
@@ -406,10 +416,10 @@ function renderBooks() {
                 }
                 
                 <div class="book-info">
-                    <div class="book-title">${book.title}</div>
+                    <div class="book-title">${safeTitle}</div>
                     ${
                       book.author
-                        ? `<div class="book-author">by ${book.author}</div>`
+                        ? `<div class="book-author">by ${safeAuthor}</div>`
                         : ""
                     }
                     
@@ -491,25 +501,29 @@ function handleAPISearch(e) {
       }
 
       searchResults.innerHTML = results
-        .map(
-          (book) => `
-                <div class="search-result-item" onclick='selectSearchResult(${JSON.stringify(
-                  book
-                ).replace(/'/g, "\\'")})'>
-                    ${
-                      book.coverUrl
-                        ? `<img src="${book.coverUrl}" alt="${book.title}" class="result-cover">`
-                        : '<div class="result-cover"></div>'
-                    }
-                    <div class="result-info">
-                        <strong>${book.title}</strong>
-                        <small>${book.author}${
+        .map((book) => {
+          // Define safe variables inside the map
+          const safeTitle = escapeHtml(book.title);
+          const safeAuthor = escapeHtml(book.author);
+
+          return `
+      <div class="search-result-item" onclick='selectSearchResult(${JSON.stringify(
+        book
+      ).replace(/'/g, "\\'")})'>
+        ${
+          book.coverUrl
+            ? `<img src="${book.coverUrl}" alt="${safeTitle}" class="result-cover">`
+            : '<div class="result-cover"></div>'
+        }
+        <div class="result-info">
+          <strong>${safeTitle}</strong>
+          <small>${safeAuthor}${
             book.firstPublishYear ? ` • ${book.firstPublishYear}` : ""
           }</small>
-                    </div>
-                </div>
-            `
-        )
+        </div>
+      </div>
+    `;
+        })
         .join("");
     } catch (error) {
       console.error("Search error:", error);
